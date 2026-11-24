@@ -1,10 +1,15 @@
 from microdot import Microdot
 import network
-import time
 import secrets
 import socket
 import struct
 import os
+import storage
+import asyncio
+import ntptime
+import time
+import errno
+
 
 WIFI_SSID = secrets.WIFI_SSID
 WIFI_PASSWORD = secrets.WIFI_PASSWORD
@@ -101,6 +106,19 @@ def check_wifi_ssid_visible(ssid):
     return exists
 
 
+def is_gateway_up(gateway_ip, port=80, timeout=2):
+    try:
+        sock = socket.socket()
+        sock.settimeout(2)
+        sock.connect((gateway_ip, port))
+        return True
+    except OSError as e:
+        # If router actively rejected the port that means its still up
+        if e.errno == errno.ECONNREFUSED:
+            return True
+        return False
+
+
 def create_AP(ssid="ESP32"):
     ap = network.WLAN(network.WLAN.IF_AP)  # create access-point interface
     ap.active(True)
@@ -130,6 +148,17 @@ def connect_to_wifi():
 wlan = connect_to_wifi()
 
 
+def sync_time():
+    try:
+        ntptime.settime()
+        print("Time synced:", time.localtime())
+        return True
+    except Exception as e:
+        print("NTP sync failed:", e)
+        return False
+
+
+sync_time()
 app = Microdot()
 
 
@@ -140,10 +169,26 @@ async def index(request):
 
 @app.route("/api/status")
 async def status(request):
+    return get_wifi_status()
+
+
+def get_wifi_status():
     return {
-        "dns_server_up": check_dns_server_up(),
+        "dns_up": check_dns_server_up(),
         "ssid_visible": check_wifi_ssid_visible(WIFI_SSID),
+        "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80)
     }
 
 
-app.run(port=80)
+async def monitor_loop():
+    while True:
+        status = get_wifi_status()
+        storage.log_hearbeat(
+            ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"])
+        await asyncio.sleep(30)
+
+
+async def main():
+    asyncio.create_task(monitor_loop())
+    await app.run(port=80)
+asyncio.run(main())
