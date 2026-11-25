@@ -245,6 +245,13 @@ async def status(request):
     return get_wifi_status()
 
 
+@app.route("/api/debug/save_buffer_logs_to_flash")
+async def save_buffer_logs_to_flash(request):
+    storage.log_hearbeat(ssid_visible=None, dns_up=None, gateway_up=None,
+                         internet_up=None, status_code=None, only_save_buffer_to_flash=True)
+    return "Saved!"
+
+
 @app.route("/api/logs")
 async def logs(request):
     return storage.get_logs()

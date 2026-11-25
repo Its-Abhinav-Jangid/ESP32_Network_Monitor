@@ -46,7 +46,13 @@ def get_logs():
     return data
 
 
-def log_hearbeat(ssid_visible, dns_up, gateway_up, internet_up, status_code):
+def log_hearbeat(ssid_visible, dns_up, gateway_up, internet_up, status_code, only_save_buffer_to_flash=False):
+    if only_save_buffer_to_flash:
+        with open(LOG_FILE, "a") as f:
+            f.write("".join(buffer))
+            buffer.clear()
+        return True
+
     global last_state
     state = (ssid_visible, dns_up, gateway_up, internet_up, status_code)
     # 946684800 to sync with standard timestamp format
