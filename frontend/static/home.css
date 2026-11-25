@@ -1,0 +1,240 @@
+:root {
+    --bg-canvas: #090D12;
+    --bg-card: #111822;
+    --bg-card-header: #16202D;
+    --bg-inset: #0B1017;
+
+    --border-muted: #223042;
+    --border-bright: #38BDF8;
+
+    --text-primary: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --accent-cyan: #38BDF8;
+
+    --status-up: #22C55E;
+    --bar-up: #166534;
+    --status-degraded: #F59E0B;
+    --status-down: #EF4444;
+    --bar-nodata: #223042;
+}
+
+@font-face {
+    font-family: "TerminalFont";
+    src: url("fonts/terminal.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "TerminalFontThin";
+    src: url("fonts/terminal-thin.woff2") format("woff2");
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: TerminalFont, ui-monospace, monospace;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-muted);
+    padding: 0 20px;
+    height: 64px;
+    margin-bottom: 16px;
+}
+
+.header-title {
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.online {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: var(--status-up);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--status-up);
+    }
+
+    50% {
+        opacity: 0.4;
+        box-shadow: none;
+    }
+}
+
+.green-dot {
+    background-color: var(--status-up);
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-muted);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.card:hover {
+    border-color: var(--border-bright);
+}
+
+.card-header {
+    background-color: var(--bg-card-header);
+    border-bottom: 1px solid var(--border-muted);
+    color: var(--accent-cyan);
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    padding: 8px 12px;
+    margin: 0;
+}
+
+.card-primary-text {
+    font-family: TerminalFont, ui-monospace, monospace;
+    color: var(--status-up);
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin: 18px 12px 6px;
+}
+
+.card-seconday-text {
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    margin: 0 12px 16px;
+}
+
+/* Optional utility classes for dynamic states in home.js */
+.status-up {
+    color: var(--status-up);
+}
+
+.status-degraded {
+    color: var(--status-degraded);
+}
+
+.status-down {
+    color: var(--status-down);
+}
+
+.chart-conatiner {
+    grid-column: 1 / -1;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-muted);
+    border-radius: 4px;
+    padding: 14px 16px;
+}
+
+.chart-top-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-muted);
+}
+
+.chart-header {
+    color: var(--accent-cyan);
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+}
+
+.chart-summary {
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.uptime-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.swatch {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    border-radius: 2px;
+}
+
+.swatch.up {
+    background-color: var(--status-up);
+}
+
+.swatch.down {
+    background-color: var(--status-down);
+}
+
+.swatch.degraded {
+    background-color: var(--status-degraded);
+}
+
+.uplot {
+    font-family: TerminalFont, ui-monospace, monospace;
+}
+
+.uplot .u-legend {
+    display: none;
+}
+
+.chart-readout {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: var(--bg-inset);
+    border: 1px solid var(--border-muted);
+    border-radius: 3px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}

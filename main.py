@@ -1,4 +1,4 @@
-from microdot import Microdot
+from microdot import Microdot, send_file
 import network
 import secrets
 import socket
@@ -106,6 +106,20 @@ def check_wifi_ssid_visible(ssid):
     return exists
 
 
+def get_wifi_signal_strength(ssid):
+    wlan = network.WLAN()
+    networks = wlan.scan()
+
+    ssid = ssid.encode('utf-8')
+
+    for net in networks:
+        if net[0] == ssid:
+
+            return net[3]
+
+    return None
+
+
 def is_gateway_up(gateway_ip, port=80, timeout=2):
     try:
         sock = socket.socket()
@@ -123,7 +137,6 @@ def fetch_website(url):
     response = None
     try:
         response = urequests.get(url, timeout=5)
-        print(response)
 
         status_code = response.status_code
         return {"error": None, "status_code": status_code}
@@ -165,9 +178,6 @@ def connect_to_wifi():
 wlan = connect_to_wifi()
 
 
-print(fetch_website("https://google.com"))
-
-
 def sync_time():
     try:
         ntptime.settime()
@@ -184,7 +194,15 @@ app = Microdot()
 
 @app.route("/")
 async def index(request):
-    return "Hello from ESP32!"
+    return send_file("frontend/home.html")
+
+
+@app.route('/static/<path:path>')
+async def static_files(request, path):
+    # Prevent directory traversal attack
+    if '..' in path:
+        return 'Not found', 404
+    return send_file('frontend/static/' + path)
 
 
 @app.route("/api/status")
@@ -198,10 +216,14 @@ async def logs(request):
 
 
 def get_wifi_status():
+    global wlan
     response = {
         "dns_up": check_dns_server_up(),
         "ssid_visible": check_wifi_ssid_visible(WIFI_SSID),
-        "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80)
+        "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80),
+        "dns_server": wlan.ifconfig()[3],
+        "gateway_ip": wlan.ifconfig()[2],
+        "signal_strength": get_wifi_signal_strength(WIFI_SSID)
     }
     website_response = fetch_website("https://google.com")
     if (not website_response["error"]):

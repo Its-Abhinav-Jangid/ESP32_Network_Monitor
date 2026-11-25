@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/uPlot.min.css">
+    <link rel="stylesheet" href="static/home.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+
+    </style>
+    <title>ESP 32 Network Monitor</title>
+</head>
+
+<body>
+
+    <div class="top-header">
+        <h4 class="header-title">Network Monitor</h4>
+
+        <h4 class="header-title online">
+            <div class="green-dot">&nbsp;</div>
+            [ ONLINE ]
+        </h4>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h4 class="card-header"># SSID</h4>
+            <h4 class="card-primary-text" id="ssid-status">[ VISIBLE ]</h4>
+            <p class="card-seconday-text" id="ssid-signal">Signal: [ -52 dBm ]</p>
+        </div>
+        <div class="card">
+            <h4 class="card-header"># DNS</h4>
+            <h4 class="card-primary-text" id="dns-status">[ UP ]</h4>
+            <p class="card-seconday-text" id="dns-server">DNS: [ 192.168.1.1 ]
+            </p>
+        </div>
+        <div class="card">
+            <h4 class="card-header"># GATEWAY</h4>
+            <h4 class="card-primary-text" id="gateway-status">[ UP ]</h4>
+            <p class="card-seconday-text" id="gateway-server">[ 192.168.1.1 ]</p>
+        </div>
+        <div class="card">
+            <h4 class="card-header"># INTERNET</h4>
+            <h4 class="card-primary-text" id="internet-status">[ REACHABLE ]</h4>
+            <p class="card-seconday-text" id="internet-response-code">[ 200 OK ]</p>
+        </div>
+
+        <div class="chart-conatiner">
+            <div class="chart-top-row">
+                <h4 class="chart-header"># UPTIME</h4>
+                <span class="chart-summary">24H: [ 99.8% ]</span>
+            </div>
+
+            <div class="uptime-legend">
+                <span class="legend-item"><span class="swatch up"></span>[ UP ]</span>
+                <span class="legend-item"><span class="swatch down"></span>[ DOWN ]</span>
+                <span class="legend-item"><span class="swatch degraded"></span>[ DEGRADED ]</span>
+            </div>
+
+            <div id="uptime-chart"></div>
+            <div class="chart-readout" id="hover-readout">
+                Hover a bar to inspect interval status &amp; latency
+            </div>
+        </div>
+    </div>
+
+    <script src="static/uPlot.min.js"></script>
+    <script src="static/home.js"></script>
+</body>
+
+</html>
