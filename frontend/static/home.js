@@ -1,8 +1,15 @@
 const $ = (id) => document.getElementById(id); // cheap jQuery :)
 const isTrue = (v) => v === true || String(v).toLowerCase() === "true";
 
+const statusLabels = {
+  200: "OK",
+  204: "OK",
+  301: "REDIRECT",
+  302: "REDIRECT",
+};
+
 let chart = null;
-let history = [];
+let logs = [];
 
 function updateBadge(id, ok, upText, downText) {
   const el = $(id);
@@ -43,9 +50,15 @@ async function fetchStatus() {
     }
     if ("status_code" in d) {
       const code = Number(d.status_code);
-      $("internet-response-code").textContent = code
-        ? `[ ${code} ${code === 200 ? "OK" : "ERR"} ]`
-        : "[ TIMEOUT ]";
+
+      if (code && statusLabels[code]) {
+        $("internet-response-code").textContent =
+          `[ ${code} ${statusLabels[code]} ]`;
+      } else if (code) {
+        $("internet-response-code").textContent = `[ ${code} ERR ]`;
+      } else {
+        $("internet-response-code").textContent = "[ TIMEOUT ]";
+      }
     }
   } catch (e) {
     console.error(e);
@@ -58,17 +71,18 @@ function parseEntry(row) {
   const dns = isTrue(row.dns_up);
   const ssid = isTrue(row.ssid_visible);
   const code = Number(row.status_code) || 0;
+  const validCode = code in statusLabels;
 
   const issues = [];
   if (!internet) issues.push("Internet");
   if (!gateway) issues.push("Gateway");
   if (!dns) issues.push("DNS");
   if (!ssid) issues.push("SSID");
-  if (code !== 200) issues.push(code ? `HTTP ${code}` : "Timeout");
+  if (!validCode) issues.push(code ? `HTTP ${code}` : "Timeout");
 
   let state = 1;
   if (!internet || !gateway) state = 0;
-  else if (!dns || !ssid || code !== 200) state = 2;
+  else if (!dns || !ssid || !validCode) state = 2;
 
   return { ts: Number(row.timestamp), state, code, issues };
 }
@@ -112,7 +126,7 @@ const barsPlugin = {
         for (let i = 0; i < xs.length; i++) {
           const x = u.valToPos(xs[i], "x", true);
           const y = u.valToPos(ys[i], "y", true);
-          ctx.fillStyle = colors[history[i].state][i === u.cursor.idx ? 1 : 0];
+          ctx.fillStyle = colors[logs[i].state][i === u.cursor.idx ? 1 : 0];
           ctx.fillRect(
             Math.round(x - w / 2),
             Math.round(y),
@@ -136,20 +150,20 @@ function drawChart(rows) {
   const summary = document.querySelector(".chart-summary");
 
   if (!Array.isArray(rows) || !rows.length) {
-    readout.textContent = "No uptime history available yet";
+    readout.textContent = "No uptime logs available yet";
     return;
   }
 
-  history = rows.map(parseEntry).sort((a, b) => a.ts - b.ts);
+  logs = rows.map(parseEntry).sort((a, b) => a.ts - b.ts);
 
-  const times = history.map((h) => h.ts);
-  const heights = history.map((h) =>
-    h.state === 1 ? 100 : h.state === 2 ? 75 : 40,
+  const times = logs.map((l) => l.ts);
+  const heights = logs.map((l) =>
+    l.state === 1 ? 100 : l.state === 2 ? 75 : 40,
   );
 
   if (summary) {
-    const up = history.filter((h) => h.state !== 0).length;
-    summary.textContent = `UPTIME: [ ${((up / history.length) * 100).toFixed(1)}% ]`;
+    const up = logs.filter((l) => l.state !== 0).length;
+    summary.textContent = `UPTIME: [ ${((up / logs.length) * 100).toFixed(1)}% ]`;
   }
 
   if (chart) {
@@ -184,11 +198,11 @@ function drawChart(rows) {
         setCursor: [
           (u) => {
             const i = u.cursor.idx;
-            if (i == null || i < 0 || i >= history.length) {
+            if (i == null || i < 0 || i >= logs.length) {
               readout.textContent = "Hover a bar to inspect interval status";
               return;
             }
-            const item = history[i];
+            const item = logs[i];
             const info = item.issues.length
               ? `Issues: ${item.issues.join(", ")}`
               : `HTTP ${item.code}`;

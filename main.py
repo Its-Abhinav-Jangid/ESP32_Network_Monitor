@@ -290,6 +290,6 @@ async def monitor_loop():
 
 
 async def main():
-    # asyncio.create_task(monitor_loop())
+    asyncio.create_task(monitor_loop())
     await app.run(port=80)
 asyncio.run(main())
