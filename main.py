@@ -10,6 +10,7 @@ import ntptime
 import time
 import errno
 import urequests
+import machine
 
 WIFI_SSID = secrets.WIFI_SSID
 WIFI_PASSWORD = secrets.WIFI_PASSWORD
@@ -26,6 +27,44 @@ def reset_esp32_wifi():
 
 
 reset_esp32_wifi()
+
+
+def create_AP(ssid="ESP32"):
+    ap = network.WLAN(network.WLAN.IF_AP)  # create access-point interface
+    ap.active(True)
+    ap.config(ssid=ssid)              # set the SSID of the access point
+    # set how many clients can connect to the network
+    ap.config(max_clients=10)
+    print("AP active SSID: ", ssid, "Ifconfig: ", ap.ifconfig())
+    return ap
+
+
+AP = create_AP()  # Create AP first anyway to serve dashboard immediately if wifi fails
+
+
+def check_wifi_ssid_visible(ssid):
+    wlan = network.WLAN()
+    networks = wlan.scan()
+    exists = any(net[0].decode() == ssid for net in networks)
+    return exists
+
+
+def connect_to_wifi():
+
+    wlan = network.WLAN()
+    wlan.active(True)
+    time.sleep(2)
+    if not wlan.isconnected() and check_wifi_ssid_visible(WIFI_SSID):
+        print('connecting to network...')
+        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        while not wlan.isconnected():
+            machine.idle()
+    print('network config:', wlan.ifconfig())
+    return wlan
+
+
+wlan = connect_to_wifi()
+time.sleep(5)  # to avoid immediate dns lookup errors
 
 
 def check_dns_server_up():
@@ -99,13 +138,6 @@ def check_dns_server_up():
     return is_hostname_resolved("google.com", wlan.ifconfig()[3])
 
 
-def check_wifi_ssid_visible(ssid):
-    wlan = network.WLAN()
-    networks = wlan.scan()
-    exists = any(net[0].decode() == ssid for net in networks)
-    return exists
-
-
 def get_wifi_signal_strength(ssid):
     wlan = network.WLAN()
     networks = wlan.scan()
@@ -133,10 +165,40 @@ def is_gateway_up(gateway_ip, port=80, timeout=2):
         return False
 
 
+def raw_head_request(ip_address, host_domain):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(2.0)
+
+    try:
+        s.connect((ip_address, 80))
+
+        request = (
+            f"HEAD /generate_204 HTTP/1.1\r\n"
+            f"Host: {host_domain}\r\n"
+            f"Connection: close\r\n\r\n"
+        )
+        s.send(request.encode("utf-8"))
+
+        response_line = s.readline()
+        if not response_line:
+            return {"error": "Empty response", "status_code": None}
+
+        parts = response_line.decode("utf-8").split(" ")
+        status_code = int(parts[1]) if len(parts) >= 2 else None
+
+        return {"error": None, "status_code": status_code}
+
+    except Exception as e:
+        return {"error": e, "status_code": None}
+
+    finally:
+        s.close()
+
+
 def fetch_website(url):
     response = None
     try:
-        response = urequests.get(url, timeout=5)
+        response = urequests.head(url, timeout=1.5)
 
         status_code = response.status_code
         return {"error": None, "status_code": status_code}
@@ -149,35 +211,6 @@ def fetch_website(url):
             response.close()
 
 
-def create_AP(ssid="ESP32"):
-    ap = network.WLAN(network.WLAN.IF_AP)  # create access-point interface
-    ap.active(True)
-    ap.config(ssid=ssid)              # set the SSID of the access point
-    # set how many clients can connect to the network
-    ap.config(max_clients=10)
-    print("AP active SSID: ", ssid, "Ifconfig: ", ap.ifconfig())
-
-
-create_AP()
-
-
-def connect_to_wifi():
-    import machine
-    wlan = network.WLAN()
-    wlan.active(True)
-    time.sleep(2)
-    if not wlan.isconnected() and check_wifi_ssid_visible(WIFI_SSID):
-        print('connecting to network...')
-        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-        while not wlan.isconnected():
-            machine.idle()
-    print('network config:', wlan.ifconfig())
-    return wlan
-
-
-wlan = connect_to_wifi()
-
-
 def sync_time():
     try:
         ntptime.settime()
@@ -187,6 +220,8 @@ def sync_time():
         print("NTP sync failed:", e)
         return False
 
+
+WEBSITE_IP = socket.getaddrinfo("clients3.google.com", 80)[0][-1][0]
 
 sync_time()
 app = Microdot()
@@ -216,16 +251,18 @@ async def logs(request):
 
 
 def get_wifi_status():
+
     global wlan
     response = {
         "dns_up": check_dns_server_up(),
-        "ssid_visible": check_wifi_ssid_visible(WIFI_SSID),
+        "ssid_visible": wlan.isconnected(),
         "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80),
         "dns_server": wlan.ifconfig()[3],
         "gateway_ip": wlan.ifconfig()[2],
-        "signal_strength": get_wifi_signal_strength(WIFI_SSID)
+        "signal_strength": wlan.status('rssi') if wlan.isconnected() else None
     }
-    website_response = fetch_website("https://google.com")
+
+    website_response = raw_head_request(WEBSITE_IP, "google.com")
     if (not website_response["error"]):
         response["internet_up"] = True
         response["status_code"] = website_response["status_code"]
@@ -240,12 +277,19 @@ def get_wifi_status():
 async def monitor_loop():
     while True:
         status = get_wifi_status()
+        all_ok = (status["ssid_visible"] and status["gateway_up"]
+                  and status["dns_up"] and status["internet_up"])
+        if all_ok and AP.active():
+            AP.active(False)  # Turn off AP when wifi is fully up
+        elif not AP.active() and not all_ok:
+            # Turn on AP if something goes down in wifi, if not on already
+            AP.active(True)
         storage.log_hearbeat(
             ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"], internet_up=status["internet_up"], status_code=status["status_code"])
         await asyncio.sleep(30)
 
 
 async def main():
-    asyncio.create_task(monitor_loop())
+    # asyncio.create_task(monitor_loop())
     await app.run(port=80)
 asyncio.run(main())
