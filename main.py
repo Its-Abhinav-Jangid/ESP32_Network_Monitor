@@ -9,7 +9,7 @@ import asyncio
 import ntptime
 import time
 import errno
-
+import urequests
 
 WIFI_SSID = secrets.WIFI_SSID
 WIFI_PASSWORD = secrets.WIFI_PASSWORD
@@ -119,6 +119,23 @@ def is_gateway_up(gateway_ip, port=80, timeout=2):
         return False
 
 
+def fetch_website(url):
+    response = None
+    try:
+        response = urequests.get(url, timeout=5)
+        print(response)
+
+        status_code = response.status_code
+        return {"error": None, "status_code": status_code}
+    except OSError as e:
+        # Catches Wi-Fi drops, DNS failures (-202), timeouts (ETIMEDOUT), and out-of-memory (ENOMEM)
+        print("Network or socket error:", e)
+        return {"error": e}
+    finally:
+        if response is not None:
+            response.close()
+
+
 def create_AP(ssid="ESP32"):
     ap = network.WLAN(network.WLAN.IF_AP)  # create access-point interface
     ap.active(True)
@@ -148,6 +165,9 @@ def connect_to_wifi():
 wlan = connect_to_wifi()
 
 
+print(fetch_website("https://google.com"))
+
+
 def sync_time():
     try:
         ntptime.settime()
@@ -173,11 +193,19 @@ async def status(request):
 
 
 def get_wifi_status():
-    return {
+    response = {
         "dns_up": check_dns_server_up(),
         "ssid_visible": check_wifi_ssid_visible(WIFI_SSID),
         "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80)
     }
+    website_response = fetch_website("https://google.com")
+    if (not website_response["error"]):
+        response["internet"] = {
+            "up": True, "status_code": website_response["status_code"]}
+    else:
+        response["internet"] = {"up": False, "status_code": None}
+
+    return response
 
 
 async def monitor_loop():
