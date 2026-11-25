@@ -192,6 +192,11 @@ async def status(request):
     return get_wifi_status()
 
 
+@app.route("/api/logs")
+async def logs(request):
+    return storage.get_logs()
+
+
 def get_wifi_status():
     response = {
         "dns_up": check_dns_server_up(),
@@ -200,10 +205,12 @@ def get_wifi_status():
     }
     website_response = fetch_website("https://google.com")
     if (not website_response["error"]):
-        response["internet"] = {
-            "up": True, "status_code": website_response["status_code"]}
+        response["internet_up"] = True
+        response["status_code"] = website_response["status_code"]
+
     else:
-        response["internet"] = {"up": False, "status_code": None}
+        response["internet_up"] = False
+        response["status_code"] = None
 
     return response
 
@@ -212,7 +219,7 @@ async def monitor_loop():
     while True:
         status = get_wifi_status()
         storage.log_hearbeat(
-            ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"])
+            ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"], internet_up=status["internet_up"], status_code=status["status_code"])
         await asyncio.sleep(30)
 
 
