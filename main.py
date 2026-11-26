@@ -221,7 +221,12 @@ def sync_time():
         return False
 
 
-WEBSITE_IP = socket.getaddrinfo("clients3.google.com", 80)[0][-1][0]
+WEBSITE_IP = None
+try:
+    WEBSITE_IP = socket.getaddrinfo("clients3.google.com", 80)[0][-1][0]
+except OSError as e:
+    print(f"Failed to get website ip, error: {e}")
+    WEBSITE_IP = "216.239.35.0"
 
 sync_time()
 app = Microdot()
@@ -263,6 +268,7 @@ def get_wifi_status():
     if not wlan.isconnected():  # if not connected, early return
         return {
             "dns_up": False,
+            "internet_up": False,
             "ssid_visible": False,
             "gateway_up": False,
             "dns_server": None,
@@ -291,15 +297,25 @@ def get_wifi_status():
 
 
 async def monitor_loop():
+    global WEBSITE_IP
+    global wlan
     while True:
         status = get_wifi_status()
         all_ok = (status["ssid_visible"] and status["gateway_up"]
                   and status["dns_up"] and status["internet_up"])
-        if all_ok and AP.active():
-            AP.active(False)  # Turn off AP when wifi is fully up
-        elif not AP.active() and not all_ok:
-            # Turn on AP if something goes down in wifi, if not on already
-            AP.active(True)
+
+        if not status["ssid_visible"] and check_wifi_ssid_visible(WIFI_SSID):
+            wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+            aysncio.sleep(2)
+            try:
+                WEBSITE_IP = socket.getaddrinfo(
+                    "clients3.google.com", 80)[0][-1][0]
+            except OSError as e:
+                print(f"Failed to get website ip, error: {e}")
+                WEBSITE_IP = "216.239.35.0"
+
+            sync_time()
+
         storage.log_hearbeat(
             ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"], internet_up=status["internet_up"], status_code=status["status_code"])
         await asyncio.sleep(30)
