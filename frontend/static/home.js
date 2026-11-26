@@ -10,11 +10,12 @@ const statusLabels = {
 
 let chart = null;
 let logs = [];
+let chartContentWidth = 400;
 
 function updateBadge(id, ok, upText, downText) {
   const el = $(id);
   if (!el) return;
-  el.textContent = `[ ${ok ? upText : downText} ]`;
+  el.textContent = `• ${ok ? upText : downText}`;
   el.classList.toggle("status-up", ok);
   el.classList.toggle("status-down", !ok);
 }
@@ -25,41 +26,17 @@ async function fetchStatus() {
     if (!res.ok) return;
     const d = await res.json();
 
-    updateBadge("ssid-status", isTrue(d.ssid_visible), "VISIBLE", "HIDDEN");
     updateBadge("dns-status", isTrue(d.dns_up), "UP", "DOWN");
     updateBadge("gateway-status", isTrue(d.gateway_up), "UP", "DOWN");
 
     $("ssid-signal").textContent =
-      d.signal_strength != null
-        ? `Signal: [ ${d.signal_strength} dBm ]`
-        : "Signal: [ N/A ]";
-    $("dns-server").textContent = d.dns_server
-      ? `DNS: [ ${d.dns_server} ]`
-      : "DNS: [ N/A ]";
-    $("gateway-server").textContent = d.gateway_ip
-      ? `[ ${d.gateway_ip} ]`
-      : "[ N/A ]";
+      d.signal_strength != null ? `${d.signal_strength} dBm` : "N/A";
 
-    if ("internet_up" in d) {
-      updateBadge(
-        "internet-status",
-        isTrue(d.internet_up),
-        "REACHABLE",
-        "UNREACHABLE",
-      );
-    }
-    if ("status_code" in d) {
-      const code = Number(d.status_code);
+    $("ssid-status").textContent = isTrue(d.ssid_visible)
+      ? `${d.ssid_name}`
+      : "N/A";
 
-      if (code && statusLabels[code]) {
-        $("internet-response-code").textContent =
-          `[ ${code} ${statusLabels[code]} ]`;
-      } else if (code) {
-        $("internet-response-code").textContent = `[ ${code} ERR ]`;
-      } else {
-        $("internet-response-code").textContent = "[ TIMEOUT ]";
-      }
-    }
+    updateBadge("internet-status", d.internet_up, "REACHABLE", "UNREACHABLE");
   } catch (e) {
     console.error(e);
   }
@@ -96,10 +73,65 @@ const fmtTime = (sec) =>
 
 const labels = { 0: "[ DOWN ]", 1: "[ UP ]", 2: "[ DEGRADED ]" };
 const colors = {
-  0: ["#EF4444", "#F87171"],
-  1: ["#166534", "#22C55E"],
-  2: ["#F59E0B", "#FBBF24"],
+  0: ["#C75CE0", "#E879F9"],
+  1: ["#C75CE0", "#E879F9"],
+  2: ["#C75CE0", "#E879F9"],
 };
+
+function setupChartScroll() {
+  const el = $("uptime-chart");
+  if (!el) return null;
+
+  let wrapper = el.parentElement;
+
+  if (!wrapper.classList.contains("chart-scroll-wrapper")) {
+    const scroll = document.createElement("div");
+
+    scroll.className = "chart-scroll-wrapper";
+    scroll.style.width = "100%";
+    scroll.style.overflowX = "auto";
+    scroll.style.overflowY = "hidden";
+    scroll.style.scrollbarWidth = "thin";
+    scroll.style.scrollbarColor = "#9635BD #050505";
+
+    el.parentNode.insertBefore(scroll, el);
+    scroll.appendChild(el);
+
+    wrapper = scroll;
+  }
+
+  return wrapper;
+}
+
+function chartViewportWidth() {
+  const wrapper = setupChartScroll();
+  return wrapper?.clientWidth || 400;
+}
+
+function chartWidth() {
+  return chartContentWidth || chartViewportWidth();
+}
+
+const WINDOW_SECONDS = 900;
+const BAR_WIDTH = 8;
+const BAR_GAP = 18;
+
+function updateChartWidth() {
+  const viewport = chartViewportWidth();
+
+  if (!logs.length) {
+    chartContentWidth = viewport;
+    return;
+  }
+
+  const duration =
+    logs.length > 1 ? logs[logs.length - 1].ts - logs[0].ts : WINDOW_SECONDS;
+
+  const timeWidth = viewport * (duration / WINDOW_SECONDS);
+  const countWidth = logs.length * (BAR_WIDTH + BAR_GAP) + 72;
+
+  chartContentWidth = Math.max(viewport, timeWidth, countWidth);
+}
 
 const barsPlugin = {
   hooks: {
@@ -109,41 +141,42 @@ const barsPlugin = {
         const [xs, ys] = u.data;
         if (!xs.length) return;
 
-        const gap = 4 * uPlot.pxRatio;
+        const px = uPlot.pxRatio;
+        const gap = BAR_GAP * px;
         const step =
           xs.length > 1
             ? Math.abs(
                 u.valToPos(xs[1], "x", true) - u.valToPos(xs[0], "x", true),
               )
-            : 24 * uPlot.pxRatio;
-        const w = Math.max(
-          4 * uPlot.pxRatio,
-          Math.min(28 * uPlot.pxRatio, step - gap),
-        );
+            : (BAR_WIDTH + BAR_GAP) * px;
+
+        const w = Math.max(BAR_WIDTH * px, Math.min(64 * px, step - gap));
+
         const base = u.valToPos(0, "y", true);
 
         ctx.save();
+
         for (let i = 0; i < xs.length; i++) {
           const x = u.valToPos(xs[i], "x", true);
           const y = u.valToPos(ys[i], "y", true);
+          const left = Math.round(x - w / 2);
+          const top = Math.round(y);
+          const width = Math.round(w);
+          const height = Math.round(base - top);
+
+          const r = Math.min(width / 2, height / 2);
+
           ctx.fillStyle = colors[logs[i].state][i === u.cursor.idx ? 1 : 0];
-          ctx.fillRect(
-            Math.round(x - w / 2),
-            Math.round(y),
-            Math.round(w),
-            Math.round(base - y),
-          );
+          ctx.beginPath();
+          ctx.roundRect(left, top, width, height, r);
+          ctx.fill();
         }
+
         ctx.restore();
       },
     ],
   },
 };
-
-function chartWidth() {
-  const el = $("uptime-chart");
-  return el.clientWidth || el.parentElement.clientWidth - 32 || 400;
-}
 
 function drawChart(rows) {
   const readout = $("hover-readout");
@@ -154,66 +187,105 @@ function drawChart(rows) {
     return;
   }
 
-  logs = rows.map(parseEntry).sort((a, b) => a.ts - b.ts);
+  const wrapper = setupChartScroll();
+
+  const wasAtEnd =
+    !chart ||
+    wrapper.scrollWidth - wrapper.scrollLeft - wrapper.clientWidth < 40;
+
+  logs = rows
+    .map(parseEntry)
+    .filter((l) => Number.isFinite(l.ts))
+    .sort((a, b) => a.ts - b.ts);
+
+  if (!logs.length) {
+    readout.textContent = "No valid uptime logs available";
+    return;
+  }
 
   const times = logs.map((l) => l.ts);
-  const heights = logs.map((l) =>
-    l.state === 1 ? 100 : l.state === 2 ? 75 : 40,
-  );
+  const heights = logs.map(() => 80);
+
+  updateChartWidth();
 
   if (summary) {
     const up = logs.filter((l) => l.state !== 0).length;
-    summary.textContent = `UPTIME: [ ${((up / logs.length) * 100).toFixed(1)}% ]`;
+    summary.textContent = `${((up / logs.length) * 100).toFixed(1)}%`;
   }
 
   if (chart) {
     chart.setData([times, heights]);
-    return;
-  }
+    chart.setSize({ width: chartWidth(), height: 80 });
+  } else {
+    chart = new uPlot(
+      {
+        width: chartWidth(),
+        height: 80,
+        padding: [8, 36, 0, 36],
+        plugins: [barsPlugin],
 
-  chart = new uPlot(
-    {
-      width: chartWidth(),
-      height: 170,
-      padding: [10, 12, 0, 12],
-      plugins: [barsPlugin],
-      cursor: {
-        drag: { x: false, y: false },
-        points: { show: false },
-        y: false,
-      },
-      scales: { x: { time: true }, y: { range: [0, 105] } },
-      axes: [
-        {
-          stroke: "#64748B",
-          grid: { show: false },
-          ticks: { stroke: "#223042", width: 1 },
-          font: "11px TerminalFont, ui-monospace, monospace",
-          values: (_, vals) => vals.map(fmtTime),
+        cursor: {
+          drag: { x: false, y: false },
+          points: { show: false },
+          y: false,
         },
-        { show: false },
-      ],
-      series: [{}, { label: "Uptime", paths: () => null }],
-      hooks: {
-        setCursor: [
-          (u) => {
-            const i = u.cursor.idx;
-            if (i == null || i < 0 || i >= logs.length) {
-              readout.textContent = "Hover a bar to inspect interval status";
-              return;
-            }
-            const item = logs[i];
-            const info = item.issues.length
-              ? `Issues: ${item.issues.join(", ")}`
-              : `HTTP ${item.code}`;
-            readout.textContent = `${fmtTime(item.ts)} · ${labels[item.state]} · ${info}`;
+
+        scales: {
+          x: { time: true },
+          y: { range: [0, 105] },
+        },
+
+        axes: [
+          {
+            stroke: "#D46CE5",
+            grid: { show: false },
+            ticks: { show: false },
+            size: 24,
+            space: 55,
+            font: "12px TerminalFont, ui-monospace, monospace",
+            values: (_, vals) => vals.map(fmtTime),
+          },
+          { show: false },
+        ],
+
+        series: [
+          {},
+          {
+            label: "Uptime",
+            paths: () => null,
+            points: { show: false },
           },
         ],
+        hooks: {
+          setCursor: [
+            (u) => {
+              const i = u.cursor.idx;
+
+              if (i == null || i < 0 || i >= logs.length) {
+                readout.textContent = "Hover a bar to inspect interval status";
+                return;
+              }
+
+              const item = logs[i];
+              const info = item.issues.length
+                ? `Issues: ${item.issues.join(", ")}`
+                : `HTTP ${item.code}`;
+
+              readout.textContent = `${fmtTime(item.ts)} · ${labels[item.state]} · ${info}`;
+            },
+          ],
+        },
       },
-    },
-    [times, heights],
-    $("uptime-chart"),
-  );
+      [times, heights],
+      $("uptime-chart"),
+    );
+  }
+
+  if (wasAtEnd) {
+    requestAnimationFrame(() => {
+      wrapper.scrollLeft = wrapper.scrollWidth;
+    });
+  }
 }
 
 async function fetchLogs() {
@@ -227,7 +299,24 @@ async function fetchLogs() {
 }
 
 window.addEventListener("resize", () => {
-  if (chart) chart.setSize({ width: chartWidth(), height: 170 });
+  if (!chart) return;
+
+  const wrapper = setupChartScroll();
+  const wasAtEnd =
+    wrapper.scrollWidth - wrapper.scrollLeft - wrapper.clientWidth < 40;
+
+  updateChartWidth();
+
+  chart.setSize({
+    width: chartWidth(),
+    height: 110,
+  });
+
+  if (wasAtEnd) {
+    requestAnimationFrame(() => {
+      wrapper.scrollLeft = wrapper.scrollWidth;
+    });
+  }
 });
 
 fetchStatus();

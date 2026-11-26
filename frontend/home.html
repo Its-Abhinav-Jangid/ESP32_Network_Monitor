@@ -19,49 +19,76 @@
 
         <h4 class="header-title online">
             <div class="green-dot">&nbsp;</div>
-            [ ONLINE ]
+            ONLINE
         </h4>
     </div>
     <div class="container">
         <div class="card">
-            <h4 class="card-header"># SSID</h4>
-            <h4 class="card-primary-text" id="ssid-status">[ VISIBLE ]</h4>
-            <p class="card-seconday-text" id="ssid-signal">Signal: [ -52 dBm ]</p>
-        </div>
-        <div class="card">
-            <h4 class="card-header"># DNS</h4>
-            <h4 class="card-primary-text" id="dns-status">[ UP ]</h4>
-            <p class="card-seconday-text" id="dns-server">DNS: [ 192.168.1.1 ]
-            </p>
-        </div>
-        <div class="card">
-            <h4 class="card-header"># GATEWAY</h4>
-            <h4 class="card-primary-text" id="gateway-status">[ UP ]</h4>
-            <p class="card-seconday-text" id="gateway-server">[ 192.168.1.1 ]</p>
-        </div>
-        <div class="card">
-            <h4 class="card-header"># INTERNET</h4>
-            <h4 class="card-primary-text" id="internet-status">[ REACHABLE ]</h4>
-            <p class="card-seconday-text" id="internet-response-code">[ 200 OK ]</p>
-        </div>
-
-        <div class="chart-conatiner">
-            <div class="chart-top-row">
-                <h4 class="chart-header"># UPTIME</h4>
-                <span class="chart-summary">24H: [ 99.8% ]</span>
+            <h4 class="card-header">01 / CONNECTION</h4>
+            <div class="card-text">
+                <p>SSID:</p>
+                <p id="ssid-status"> My network </p>
             </div>
-
-            <div class="uptime-legend">
-                <span class="legend-item"><span class="swatch up"></span>[ UP ]</span>
-                <span class="legend-item"><span class="swatch down"></span>[ DOWN ]</span>
-                <span class="legend-item"><span class="swatch degraded"></span>[ DEGRADED ]</span>
-            </div>
-
-            <div id="uptime-chart"></div>
-            <div class="chart-readout" id="hover-readout">
-                Hover a bar to inspect interval status &amp; latency
+            <div class="card-text">
+                <p>Signal:</p>
+                <p id="ssid-signal">-52 dBm</p>
             </div>
         </div>
+        <hr>
+        <div class="card">
+            <h4 class="card-header">02 / NETWORK SERVICES</h4>
+            <div class="card-text">
+                <p>GATEWAY:</p>
+                <p id="gateway-status" class="status-up">• UP </p>
+            </div>
+            <div class="card-text">
+                <p>DNS:</p>
+                <p id="dns-status" class="status-up">• UP</p>
+            </div>
+            <div class="card-text">
+                <p>INTERNET:</p>
+                <p id="internet-status" class="status-up">• REACHABLE</p>
+            </div>
+        </div>
+        <hr>
+        <div class="card">
+            <h4 class="card-header">03 /UPTIME</h4>
+            <div class="chart-conatiner">
+                <div class="chart-top-row">
+
+                    <span class="chart-summary">99.8%</span>
+                </div>
+
+
+
+                <div id="uptime-chart"></div>
+                <div class="chart-readout" id="hover-readout">
+                    Hover a bar to inspect interval status &amp; latency
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="card">
+            <h4 class="card-header">04 / URL DIAGNOSTICS</h4>
+            <div class="card-text">
+                <input type="text">
+                <button>TEST</button>
+            </div>
+            <div class="card-text">
+                <p>DNS:</p>
+                <p id="ssid-signal" class="status-up">• RESOLVED</p>
+            </div>
+            <div class="card-text">
+                <p>HTTP RESPONSE:</p>
+                <p id="ssid-signal" class="status-up">• 200 OK</p>
+            </div>
+            <div class="card-text">
+                <p>RESPONSE LENGTH:</p>
+                <p id="ssid-signal" class="status-up">• 8429 BYTES</p>
+            </div>
+        </div>
+
+
     </div>
 
     <script src="static/uPlot.min.js"></script>

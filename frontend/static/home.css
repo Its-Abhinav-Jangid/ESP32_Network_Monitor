@@ -1,16 +1,16 @@
 :root {
-    --bg-canvas: #090D12;
+    --bg-canvas: #000000;
     --bg-card: #111822;
     --bg-card-header: #16202D;
     --bg-inset: #0B1017;
 
-    --border-muted: #223042;
-    --border-bright: #38BDF8;
+    --border-muted: #4f1e72;
+    --border-bright: #cc66da;
 
-    --text-primary: #E2E8F0;
+    --text-primary: #cc66da;
     --text-secondary: #94A3B8;
     --text-muted: #64748B;
-    --accent-cyan: #38BDF8;
+    --accent-yellow: #faeb92;
 
     --status-up: #22C55E;
     --bar-up: #166534;
@@ -50,11 +50,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-muted);
-    padding: 0 20px;
-    height: 64px;
+    border-bottom: 1px solid var(--border-bright);
+    padding: 0 10px;
+    height: 54px;
     margin-bottom: 16px;
+    text-transform: uppercase;
 }
 
 .header-title {
@@ -68,7 +68,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 15px;
+    font-size: 18px;
     color: var(--status-up);
 }
 
@@ -89,26 +89,33 @@ body {
 .green-dot {
     background-color: var(--status-up);
     border-radius: 50%;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     animation: pulse 2s ease-in-out infinite;
 }
 
 .container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+    /* grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); */
+    /* gap: 1rem; */
     max-width: 1100px;
     margin: 0 auto;
     padding: 16px;
 }
 
+.container hr {
+    margin: 0;
+    margin-left: -16px;
+    margin-right: -16px;
+    width: auto;
+    border: none;
+
+    border-top: 1px solid var(--border-muted);
+}
+
 .card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-muted);
-    border-radius: 4px;
     overflow: hidden;
-    transition: border-color 0.15s ease;
+    padding: 8px 0px;
 }
 
 .card:hover {
@@ -116,32 +123,59 @@ body {
 }
 
 .card-header {
-    background-color: var(--bg-card-header);
-    border-bottom: 1px solid var(--border-muted);
-    color: var(--accent-cyan);
-    font-size: 13px;
+    color: var(--accent-yellow);
+    font-size: 18px;
     letter-spacing: 1.5px;
-    padding: 8px 12px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
     margin: 0;
 }
 
-.card-primary-text {
-    font-family: TerminalFont, ui-monospace, monospace;
-    color: var(--status-up);
-    text-align: center;
-    font-size: 24px;
-    letter-spacing: 1px;
-    margin: 18px 12px 6px;
+p {
+    margin: 0;
 }
 
-.card-seconday-text {
-    color: var(--text-secondary);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 14px;
-    margin: 0 12px 16px;
+.card-text {
+    color: var(--text-primary);
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 10px;
+    gap: 8px;
+
+}
+
+.green-text {
+    color: var(--status-up);
+
+}
+
+input {
+    background: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    border: 2px solid var(--border-bright);
+    padding: 6px 4px;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+button {
+    padding: 0;
+    background: none;
+    padding: 1px 12px;
+    border: 2px solid var(--border-bright);
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    transition: .2s ease;
+}
+
+button:hover {
+    background-color: var(--border-bright);
+    color: #000000;
 }
 
 /* Optional utility classes for dynamic states in home.js */
@@ -159,9 +193,7 @@ body {
 
 .chart-conatiner {
     grid-column: 1 / -1;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-muted);
-    border-radius: 4px;
+
     padding: 14px 16px;
 }
 
@@ -172,11 +204,12 @@ body {
     gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-muted);
+
 }
 
+
 .chart-header {
-    color: var(--accent-cyan);
+    color: var(--accent-yellow);
     margin: 0;
     font-size: 15px;
     letter-spacing: 1.5px;
@@ -184,7 +217,7 @@ body {
 
 .chart-summary {
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 20px;
 }
 
 .uptime-legend {

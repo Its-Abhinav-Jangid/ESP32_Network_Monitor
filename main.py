@@ -270,6 +270,7 @@ def get_wifi_status():
             "dns_up": False,
             "internet_up": False,
             "ssid_visible": False,
+            "ssid_name": "N/A",
             "gateway_up": False,
             "dns_server": None,
             "gateway_ip": None,
@@ -277,6 +278,7 @@ def get_wifi_status():
         }
     response = {
         "dns_up": check_dns_server_up(),
+        "ssid_name": WIFI_SSID,
         "ssid_visible": wlan.isconnected(),
         "gateway_up": is_gateway_up(wlan.ifconfig()[2], 80),
         "dns_server": wlan.ifconfig()[3],
