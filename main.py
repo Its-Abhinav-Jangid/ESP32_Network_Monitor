@@ -260,6 +260,15 @@ async def logs(request):
 def get_wifi_status():
 
     global wlan
+    if not wlan.isconnected():  # if not connected, early return
+        return {
+            "dns_up": False,
+            "ssid_visible": False,
+            "gateway_up": False,
+            "dns_server": None,
+            "gateway_ip": None,
+            "signal_strength":  None
+        }
     response = {
         "dns_up": check_dns_server_up(),
         "ssid_visible": wlan.isconnected(),
