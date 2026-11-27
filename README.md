@@ -19,7 +19,7 @@ The project aims to monitor your home wifi for downtimes by keeping logs of the 
 
 # Screenshot(s)
 
-![Initial design]("images/first_design.png")
+![Initial design](images/first_design.png)
 
 _wait, its just one~_
 
@@ -90,17 +90,17 @@ After all this, the avg response time dropped from ~8s to < 800ms which seems pr
 
 The initial design looked like this:
 
-![Initial design]("images/first_design.png")
+![Initial design](images/first_design.png)
 Tbh, now it looks good to me for some reason...
 
 So, I went to colorhunts to look for a color pallete, and I found a neon style color pallete, so I made this:
 
-![Second design]("images/second_design.png")
+![Second design](images/second_design.png)
 
 This also looked decent, but I wanted to get rid of the cards and a new layout... (idk why)
 Finally I settled on this:
 
-![Final design]("images/Home.png")
+![Final design](images/Home.png)
 I got inspiration for this from a earlier hackathon event's website... and, it looks pretty _damn good_ to me, _doesn't it?_.
 
 _I can yap here all day, so I'm gonna stop here..._
