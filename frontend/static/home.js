@@ -2,10 +2,35 @@ const $ = (id) => document.getElementById(id); // cheap jQuery :)
 const isTrue = (v) => v === true || String(v).toLowerCase() === "true";
 
 const statusLabels = {
+  100: "CONTINUE",
+  101: "SWITCHING_PROTOCOLS",
   200: "OK",
-  204: "OK",
-  301: "REDIRECT",
-  302: "REDIRECT",
+  201: "CREATED",
+  202: "ACCEPTED",
+  204: "NO_CONTENT",
+  206: "PARTIAL_CONTENT",
+  301: "MOVED_PERMANENTLY",
+  302: "FOUND",
+  304: "NOT_MODIFIED",
+  307: "TEMPORARY_REDIRECT",
+  308: "PERMANENT_REDIRECT",
+  400: "BAD_REQUEST",
+  401: "UNAUTHORIZED",
+  403: "FORBIDDEN",
+  404: "NOT_FOUND",
+  405: "METHOD_NOT_ALLOWED",
+  408: "REQUEST_TIMEOUT",
+  409: "CONFLICT",
+  410: "GONE",
+  413: "PAYLOAD_TOO_LARGE",
+  415: "UNSUPPORTED_MEDIA_TYPE",
+  422: "UNPROCESSABLE_ENTITY",
+  429: "TOO_MANY_REQUESTS",
+  500: "INTERNAL_SERVER_ERROR",
+  501: "NOT_IMPLEMENTED",
+  502: "BAD_GATEWAY",
+  503: "SERVICE_UNAVAILABLE",
+  504: "GATEWAY_TIMEOUT",
 };
 
 let chart = null;
@@ -150,7 +175,11 @@ const barsPlugin = {
               )
             : (BAR_WIDTH + BAR_GAP) * px;
 
-        const w = Math.max(BAR_WIDTH * px, Math.min(64 * px, step - gap));
+        const MAX_BAR_WIDTH = 12;
+        const w = Math.max(
+          BAR_WIDTH * px,
+          Math.min(MAX_BAR_WIDTH * px, step - gap),
+        );
 
         const base = u.valToPos(0, "y", true);
 
@@ -295,6 +324,89 @@ async function fetchLogs() {
     drawChart(await res.json());
   } catch (e) {
     console.error(e);
+  }
+}
+
+async function handleUrlCheck() {
+  btn = $("url-check-btn");
+  btnText = $("url-check-btn-text");
+  btnLoader = $("url-check-btn-loader");
+  url = $("website-url").value;
+  dnsStatus = $("url-check-dns-status");
+  responseCode = $("url-check-response-code");
+  responseLength = $("url-check-response-length");
+  dnsStatus.classList.remove("status-up");
+  responseCode.classList.remove("status-up");
+  responseLength.classList.remove("status-up");
+  dnsStatus.classList.remove("status-down");
+  responseCode.classList.remove("status-down");
+  responseLength.classList.remove("status-down");
+
+  if (!url.includes(".")) {
+    return;
+  }
+  btn.disabled = true;
+  btnText.classList.add("hidden");
+  btnLoader.classList.remove("hidden");
+  dnsStatus.innerHTML = `<span is-="spinner"></span>`;
+  responseCode.innerHTML = `<span is-="spinner"></span>`;
+  responseLength.innerHTML = `<span is-="spinner"></span>`;
+
+  function stopLoading() {
+    btn.disabled = false;
+    btnText.classList.remove("hidden");
+    btnLoader.classList.add("hidden");
+    dnsStatus.innerHTML = ``;
+    responseCode.innerHTML = ``;
+    responseLength.innerHTML = ``;
+  }
+
+  try {
+    const res = await fetch("/api/check_website", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: url }),
+    });
+    if (!res.ok) {
+      stopLoading();
+      return;
+    }
+    data = await res.json();
+    function setLabel(label, text, up) {
+      label.innerText = `• ${text}`;
+      if (up) {
+        label.classList.remove("status-down");
+        label.classList.add("status-up");
+      } else {
+        label.classList.add("status-down");
+        label.classList.remove("status-up");
+      }
+    }
+    stopLoading();
+    setLabel(
+      dnsStatus,
+      data.dns_resolved ? "RESOLVED" : "UNRESOLVED",
+      data.dns_resolved,
+    );
+    setLabel(
+      responseCode,
+      data.status_code
+        ? `${data.status_code} ${statusLabels[data.status_code] || "OTHER"}`
+        : "N/A",
+      data.status_code && data.status_code > 100 && data.status_code < 400,
+    );
+    setLabel(
+      responseLength,
+      data.response_length ? `${data.response_length} BYTES` : "N/A",
+      data.response_length,
+    );
+  } catch {
+    stopLoading();
+    dnsStatus.innerHTML = `• -`;
+    responseCode.innerHTML = `• -`;
+    responseLength.innerHTML = `• -`;
   }
 }
 

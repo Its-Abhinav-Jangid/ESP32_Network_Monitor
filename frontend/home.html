@@ -71,20 +71,22 @@
         <div class="card">
             <h4 class="card-header">04 / URL DIAGNOSTICS</h4>
             <div class="card-text">
-                <input type="text">
-                <button>TEST</button>
+                <input type="text" id="website-url">
+                <button class="url-check-btn" onclick="handleUrlCheck()" id="url-check-btn"><span
+                        id="url-check-btn-text">TEST</span><span is-="spinner" variant-="bar-vertical" class="hidden"
+                        id="url-check-btn-loader"></span></button>
             </div>
             <div class="card-text">
                 <p>DNS:</p>
-                <p id="ssid-signal" class="status-up">• RESOLVED</p>
+                <p class="text-muted" id="url-check-dns-status">• ----</p>
             </div>
             <div class="card-text">
                 <p>HTTP RESPONSE:</p>
-                <p id="ssid-signal" class="status-up">• 200 OK</p>
+                <p class="text-muted" id="url-check-response-code">• ----</p>
             </div>
             <div class="card-text">
                 <p>RESPONSE LENGTH:</p>
-                <p id="ssid-signal" class="status-up">• 8429 BYTES</p>
+                <p class="text-muted" id="url-check-response-length">• ----</p>
             </div>
         </div>
 

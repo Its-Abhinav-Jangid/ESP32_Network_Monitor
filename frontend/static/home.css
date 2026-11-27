@@ -1,3 +1,7 @@
+@import 'tui_css/base.css';
+@import 'tui_css/spinner.css';
+
+
 :root {
     --bg-canvas: #000000;
     --bg-card: #111822;
@@ -33,6 +37,10 @@
     font-weight: 200;
     font-style: normal;
     font-display: swap;
+}
+
+.hidden {
+    display: none;
 }
 
 * {
@@ -173,6 +181,14 @@ button {
     transition: .2s ease;
 }
 
+.text-muted {
+    color: var(--text-muted);
+}
+
+.url-check-btn {
+    min-width: 9ch;
+}
+
 button:hover {
     background-color: var(--border-bright);
     color: #000000;
@@ -202,8 +218,6 @@ button:hover {
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
 
 }
 
