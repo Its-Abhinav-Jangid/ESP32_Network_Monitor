@@ -404,9 +404,9 @@ async function handleUrlCheck() {
     );
   } catch {
     stopLoading();
-    dnsStatus.innerHTML = `• -`;
-    responseCode.innerHTML = `• -`;
-    responseLength.innerHTML = `• -`;
+    dnsStatus.innerHTML = `• ----`;
+    responseCode.innerHTML = `• ----`;
+    responseLength.innerHTML = `• ----`;
   }
 }
 
