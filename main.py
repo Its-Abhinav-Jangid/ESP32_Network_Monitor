@@ -336,7 +336,8 @@ def get_wifi_status():
             "gateway_up": False,
             "dns_server": None,
             "gateway_ip": None,
-            "signal_strength":  None
+            "signal_strength":  None,
+            "status_code": None
         }
     response = {
         "dns_up": check_dns_server_up(),

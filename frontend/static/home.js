@@ -98,9 +98,9 @@ const fmtTime = (sec) =>
 
 const labels = { 0: "[ DOWN ]", 1: "[ UP ]", 2: "[ DEGRADED ]" };
 const colors = {
-  0: ["#C75CE0", "#E879F9"],
+  0: ["#EF4444", "#F87171"],
   1: ["#C75CE0", "#E879F9"],
-  2: ["#C75CE0", "#E879F9"],
+  2: ["#F59E0B", "#FBBF24"],
 };
 
 function setupChartScroll() {
