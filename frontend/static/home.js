@@ -356,9 +356,9 @@ async function handleUrlCheck() {
     btn.disabled = false;
     btnText.classList.remove("hidden");
     btnLoader.classList.add("hidden");
-    dnsStatus.innerHTML = ``;
-    responseCode.innerHTML = ``;
-    responseLength.innerHTML = ``;
+    dnsStatus.innerHTML = `• ----`;
+    responseCode.innerHTML = `• ----`;
+    responseLength.innerHTML = `• ----`;
   }
 
   try {
