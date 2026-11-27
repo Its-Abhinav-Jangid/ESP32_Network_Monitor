@@ -19,7 +19,7 @@ The project aims to monitor your home wifi for downtimes by keeping logs of the 
 
 # Screenshot(s)
 
-![Initial design](images/first_design.png)
+![Initial design](images/Home.png)
 
 _wait, its just one~_
 
