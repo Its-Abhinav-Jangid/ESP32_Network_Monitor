@@ -328,7 +328,7 @@ async def save_buffer_logs_to_flash(request):
 
 @app.route("/api/logs")
 async def logs(request):
-    return storage.get_logs()
+    return storage.get_logs(), 200, {"Content-Type": "application/json"}
 
 
 def get_wifi_status():
@@ -412,7 +412,7 @@ async def monitor_loop():
             status_code=latest_status["status_code"],
         )
         gc.collect()
-        await asyncio.sleep(15)
+        await asyncio.sleep(30)
 
 
 async def heartbeat():

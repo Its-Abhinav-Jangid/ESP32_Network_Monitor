@@ -37,13 +37,34 @@ def csv_text_to_json(csv_text):
 
 
 def get_logs():
+    yield "["
+    first = True
+    headers = None
+
     with open(LOG_FILE, "r") as f:
-        csv_text = f.read()
+        header_line = f.readline().strip()
+        if header_line:
+            headers = header_line.split(",")
 
-    data = csv_text_to_json(csv_text)
+        if headers:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                row = dict(zip(headers, line.split(",")))
+                yield ("" if first else ",") + json.dumps(row)
+                first = False
 
-    data.extend(buffer_to_json())
-    return data
+    if headers:
+        for line in list(buffer):
+            line = line.strip()
+            if not line:
+                continue
+            row = dict(zip(headers, line.split(",")))
+            yield ("" if first else ",") + json.dumps(row)
+            first = False
+
+    yield "]"
 
 
 def log_hearbeat(ssid_visible, dns_up, gateway_up, internet_up, status_code, only_save_buffer_to_flash=False):
