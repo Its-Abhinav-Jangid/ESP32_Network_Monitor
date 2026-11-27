@@ -137,9 +137,9 @@ function chartWidth() {
   return chartContentWidth || chartViewportWidth();
 }
 
-const WINDOW_SECONDS = 900;
+const WINDOW_SECONDS = 1200;
 const BAR_WIDTH = 8;
-const BAR_GAP = 18;
+const BAR_GAP = 12;
 
 function updateChartWidth() {
   const viewport = chartViewportWidth();
@@ -249,7 +249,7 @@ function drawChart(rows) {
     chart = new uPlot(
       {
         width: chartWidth(),
-        height: 80,
+        height: 64,
         padding: [8, 36, 0, 36],
         plugins: [barsPlugin],
 
