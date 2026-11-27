@@ -412,7 +412,7 @@ async def monitor_loop():
             status_code=latest_status["status_code"],
         )
         gc.collect()
-        await asyncio.sleep(30)
+        await asyncio.sleep(15)
 
 
 async def heartbeat():
