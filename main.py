@@ -166,6 +166,8 @@ def is_gateway_up(gateway_ip, port=80, timeout=2):
         if e.errno == errno.ECONNREFUSED:
             return True
         return False
+    finally:
+        sock.close()
 
 
 def raw_head_request(ip_address, host_domain):
@@ -265,6 +267,11 @@ sync_time()
 app = Microdot()
 
 
+@app.before_request
+async def log_req(request):
+    print("REQ:", request.method, request.path)
+
+
 @app.route("/")
 async def index(request):
     return send_file("frontend/home.html")
@@ -362,31 +369,60 @@ def get_wifi_status():
 
 
 async def monitor_loop():
-    global WEBSITE_IP
-    global wlan
-    while True:
-        status = get_wifi_status()
-        all_ok = (status["ssid_visible"] and status["gateway_up"]
-                  and status["dns_up"] and status["internet_up"])
+    global WEBSITE_IP, wlan, latest_status
+    was_disconnected = False
+    last_reconnect = -60000
 
-        if not status["ssid_visible"] and check_wifi_ssid_visible(WIFI_SSID):
-            wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-            aysncio.sleep(2)
+    while True:
+        latest_status = get_wifi_status()
+
+        if not wlan.isconnected():
+            was_disconnected = True
+            sta_state = wlan.status()
+            now = time.ticks_ms()
+
+            retry_delay = 10000 if sta_state == 15 else 60000
+
+            if sta_state != network.STAT_CONNECTING and time.ticks_diff(now, last_reconnect) >= retry_delay:
+                last_reconnect = now
+                print("Wi-Fi lost (status:", sta_state,
+                      "), attempting reconnect...")
+                try:
+                    wlan.disconnect()
+                    await asyncio.sleep(0.5)
+                    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+                except OSError as e:
+                    print("Reconnect error:", e)
+        elif was_disconnected:
+            was_disconnected = False
+            print("Reconnected:", wlan.ifconfig())
             try:
                 WEBSITE_IP = socket.getaddrinfo(
                     "clients3.google.com", 80)[0][-1][0]
             except OSError as e:
-                print(f"Failed to get website ip, error: {e}")
+                print(f"Failed to get website ip: {e}")
                 WEBSITE_IP = "216.239.35.0"
-
             sync_time()
 
         storage.log_hearbeat(
-            ssid_visible=status["ssid_visible"], dns_up=status["dns_up"], gateway_up=status["gateway_up"], internet_up=status["internet_up"], status_code=status["status_code"])
-        await asyncio.sleep(30)
+            ssid_visible=latest_status["ssid_visible"],
+            dns_up=latest_status["dns_up"],
+            gateway_up=latest_status["gateway_up"],
+            internet_up=latest_status["internet_up"],
+            status_code=latest_status["status_code"],
+        )
+        gc.collect()
+        await asyncio.sleep(15)
+
+
+async def heartbeat():
+    while True:
+        print("alive .... mem:", gc.mem_free(), ".... sta:", wlan.status())
+        await asyncio.sleep(2)
 
 
 async def main():
+    asyncio.create_task(heartbeat())
     asyncio.create_task(monitor_loop())
-    await app.run(port=80)
+    await app.start_server(port=80)
 asyncio.run(main())
