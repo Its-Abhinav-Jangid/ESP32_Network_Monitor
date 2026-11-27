@@ -139,7 +139,7 @@ function chartWidth() {
 
 const WINDOW_SECONDS = 1200;
 const BAR_WIDTH = 8;
-const BAR_GAP = 12;
+const BAR_GAP = 18;
 
 function updateChartWidth() {
   const viewport = chartViewportWidth();
